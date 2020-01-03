@@ -178,6 +178,29 @@ makePotion = function(ingredients, g){
   }
 }
 
+# Function to identify the number of ingredient-effect edges revealed (number where Known == F)
+# Updates values for counts and known effects
+# returns number of edges revealed
+# ingredients: character vector of length 2 or 3
+# g: igraph containing all ingredients and effects
+# Author: Nathan Pratt
+# 2019-12-31
+getEdgesRevealed = function(ingredients, g){
+  # fail if not 2 or 3 ingredients
+  if (length(ingredients) != 2 && length(ingredients) != 3){
+    stop("2 or 3 ingredients must be provided")
+  }
+  # fail if all ingredients don't have at least one in inventory
+  ingredientCounts = sapply(ingredients, function(x) getIngredientCount(x, g))
+  if (any(ingredientCounts < 1)){
+    stop("Not enough ingredients")
+  }
+  # create subgraph of all effects and only the ingredients passed to this function
+  sg = subgraph(g, V(g)[V(g)$Type == "Effect" | V(g)$name %in% ingredients])
+  sgEDf = igraph::as_data_frame(sg, "edges")
+  return(sum(!sgEDf$Known))
+}
+
 # Function to determine the potion to craft that will reveal the most ingredient effects (min 1)
 # This approach does not consider optimizing interactions with ingredients with the fewest 
 # quantity in inventory
@@ -187,11 +210,18 @@ makePotion = function(ingredients, g){
 # g: igraph containing all ingredients and effects
 # Author: Nathan Pratt
 # 2019-12-31
-recommendPotion = function(g){
-  
+recommendPotionForEffectReveal = function(g){
+  # get subgraph showing only unknown effects and ingredients with at least one count
+  sg = subgraph(g, )
 }
 
-
-
+# Function to get all unique combinations of a range of values
+# Combinations of 3 values
+# ij: range of numericValues (or vector of unique values)
+# Author: Nathan Pratt
+# 2020-01-03
+getAllCombinationsOfRange = function(ij){
+  
+}
 
 
