@@ -17,7 +17,7 @@ baseDir = "~/GitHub/DiscreteOptim_SkyrimAlchemy/"
 if (!dir.exists(baseDir)){
   baseDir = choose.dir(caption = "Locate Base Repo Directory")
 }
-DataFile = paste0(baseDir, "/Data/alchemyGraph.rds")
+DataFile = paste0(baseDir, "Data/alchemyGraph.rds")
 graphFunctionsFile = paste0(baseDir, "graphFx.r")
 alchemyGraph = readRDS(DataFile)
 #source(getDataFile)
