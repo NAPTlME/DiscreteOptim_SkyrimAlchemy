@@ -255,7 +255,11 @@ recommendPotionForEffectReveal = function(g){
                numIngredientsUsed = length(potionCombinations[[i]]))
   }))
   combinationMetadata = combinationMetadata %>% 
+    filter(numRevealedEffects > 0) %>%
     arrange(-numRevealedEffects, numIngredientsUsed, -numIngredientsWithOnly1Count)
+  if (nrow(combinationMetadata) == 0){
+    return(NA)
+  }
   return(potionCombinations[[combinationMetadata$index[1]]])
 }
 
