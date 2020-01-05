@@ -232,7 +232,7 @@ recommendPotionForEffectReveal = function(g){
   ### get effects this ingredient connects to and find which of these has the highest number of connections
   # get all nodes within distance 2 and 4 from this vertex (these are potential ingredients for the potion)
   searchResults = bfs(sg, root = ingredientVs[ingredientIndexToUse], order = F, unreachable = F, dist = T)
-  VerticesToUse = names(searchResults$dist[searchResults$dist == 2 | searchResults$dist == 4])
+  VerticesToUse = names(searchResults$dist[!is.nan(searchResults$dist) & (searchResults$dist == 2 | searchResults$dist == 4)])
   # get name of first ingredient
   ingredient = ingredientVs$name[ingredientIndexToUse]
   # all combinations of 2 and 3 ingredients from these values
