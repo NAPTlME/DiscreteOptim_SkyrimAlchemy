@@ -139,6 +139,9 @@ setKnownIngredientEffect = function(ingredient, effect, known, g){
   if (length(effect) == 0 | class(known) != "logical"){
     stop("Must supply a logical value for known")
   }
+  if (!(ingredient %in% V(g)$name[V(g)$Type == "Ingredient"])){
+    stop(paste0(ingredient, " is not a known ingredient, check spelling and case."))
+  }
   # validate that effect is adjacent to ingredient
   isAdjacent = effect %in% getIngredientEffectsDf(ingredient, g)$effect
   if (isAdjacent){
