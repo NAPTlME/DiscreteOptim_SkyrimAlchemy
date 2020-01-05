@@ -118,6 +118,7 @@ getIngredientCount = function(ingredient, g){
 # Author: Nathan Pratt
 # 2020-01-01
 setKnownIngredientEffect = function(ingredient, effect, known, g){
+  effect = as.character(effect)
   if (length(ingredient) > 1){
     warning("Will only use the first ingredient")
     ingredient = ingredient[1]
@@ -145,10 +146,8 @@ setKnownIngredientEffect = function(ingredient, effect, known, g){
   # validate that effect is adjacent to ingredient
   isAdjacent = effect %in% getIngredientEffectsDf(ingredient, g)$effect
   if (isAdjacent){
-    # get edge
-    effectEdge = E(g)[E(g)$from == ingredient & E(g)$to == effect]
-    # update value
-    effectEdge$Known = known
+    # get edge and update value
+    E(g, P = V(g)[V(g)$name %in% c(ingredient, effect)])$Known = known
   } else {
     warning(paste0("The effect: ", effect, " is not an effect of ", ingredient, 
                    ".\nIgnoring this operation."))
