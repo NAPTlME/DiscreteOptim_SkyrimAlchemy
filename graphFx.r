@@ -176,6 +176,7 @@ makePotion = function(ingredients, g){
       g = setKnownIngredientEffect(ingredient, effect, T, g)
     }
   }
+  return(g)
 }
 
 # Function to identify the number of ingredient-effect edges revealed (number where Known == F)
@@ -287,4 +288,23 @@ getAllCombinationsOfRange = function(ij, n){
   return(returnVal)
 }
 
+# Function to recommend sequence of potions that will unlock the highest number of ingredient effects
+# returns list of character vectors, each containing the ingredients for a potion
+# g: the graph of all ingredients and effects
+# Author: Nathan Pratt
+# 2020-01-04
+potionsRecommendedForEffectReveal = function(g){
+  potionRecommendations = list()
+  repeat{
+    x = recommendPotionForEffectReveal(g)
+    if (is.na(x)){
+      break
+    } else {
+      # simulate making the potion and add to list
+      g = makePotion(x, g)
+      potionRecommendations[[length(potionRecommendations) + 1]] = x
+    }
+  }
+  return(potionRecommendations)
+}
 
