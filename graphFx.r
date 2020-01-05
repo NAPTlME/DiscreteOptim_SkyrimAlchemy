@@ -212,16 +212,79 @@ getEdgesRevealed = function(ingredients, g){
 # 2019-12-31
 recommendPotionForEffectReveal = function(g){
   # get subgraph showing only unknown effects and ingredients with at least one count
-  sg = subgraph(g, )
+  sg = subgraph(g, V(g)[V(g)$Type == "Effect" | V(g)$Count > 0])
+  # remove known edges
+  sg = delete.edges(sg, E(sg)[E(sg)$Known])
+  # get ingredient vertices
+  ingredientVs = V(sg)[V(sg)$Type == "Ingredient"]
+  if (length(ingredientVs) == 0){ # exit early if there are no more vertices to check
+    return(NA)
+  }
+  # get ingredient with highest number of edges # returns named numeric vector
+  ingredientNumHiddenEffects = degree(sg, ingredientVs)
+  ingredientIndexToUse = which(ingredientNumHiddenEffects == max(ingredientNumHiddenEffects))[1]
+  ### get effects this ingredient connects to and find which of these has the highest number of connections
+  # get all nodes within distance 2 and 4 from this vertex (these are potential ingredients for the potion)
+  searchResults = bfs(sg, root = ingredientVs[ingredientIndexToUse], order = F, unreachable = F, dist = T)
+  VerticesToUse = names(searchResults$dist[searchResults$dist == 2 | searchResults$dist == 4])
+  # get name of first ingredient
+  ingredient = ingredientVs$name[ingredientIndexToUse]
+  # all combinations of 2 and 3 ingredients from these values
+  potionCombinations = c(lapply(VerticesToUse, function(x) c(ingredient, x)), 
+                         lapply(getAllCombinationsOfRange(VerticesToUse, 2), function(x) c(ingredient, x)))
+  # calculate number of effects revealed for each, as well as number of ingredients used 
+  # and number of ingredients with only one in inventory
+  combinationMetadata = do.call(rbind, lapply(1:length(potionCombinations), function(i){
+    data.frame(index = i,
+               numRevealedEffects = getEdgesRevealed(potionCombinations[[i]], sg), # could also just send g here
+               numIngredientsWithOnly1Count = sum(ingredientVs$Count[ingredientVs$name %in% potionCombinations[[i]]] == 1),
+               numIngredientsUsed = length(potionCombinations[[i]]))
+  }))
+  combinationMetadata = combinationMetadata %>% 
+    arrange(-numRevealedEffects, numIngredientsUsed, -numIngredientsWithOnly1Count)
+  return(potionCombinations[[combinationMetadata$index[1]]])
+}
+
+# Function to expand all unique pairings of a vector in n-dimensions
+# x: a vector of unique values
+# n: a numeric value of length 1 no less than 2
+# include.equals (allows duplication of values)
+# Modified from code found here: https://stackoverflow.com/questions/17171148/non-redundant-version-of-expand-grid
+# Author: Nathan Pratt
+# 2020-01-04
+expand.grid.unique_FromSingleVector <- function(x, n = 2, include.equals=FALSE)
+{
+  g <- function(i, x, n)
+  {
+    z <- setdiff(x[i:length(x)], x[seq_len(i-include.equals)])
+    
+    if(length(z)) 
+    {
+      if (n == 1){
+        NextLevel = z
+      } else {
+        NextLevel = do.call(rbind, lapply(seq_along(z[1:(length(z) - n + 1)]), function(k) g(k, z, n-1)))
+      }
+      cbind(x[i], NextLevel, deparse.level=0)
+    }
+  }
+  
+  do.call(rbind, lapply(seq_along(x[1:(length(x) - n + 1)]), function(k) g(k, x, n - 1)))
 }
 
 # Function to get all unique combinations of a range of values
-# Combinations of 3 values
+# Combinations of n values
 # ij: range of numericValues (or vector of unique values)
 # Author: Nathan Pratt
 # 2020-01-03
-getAllCombinationsOfRange = function(ij){
-  
+getAllCombinationsOfRange = function(ij, n){
+  if (n > length(ij)){
+    warning("n cannot exceed the length of range ij.")
+    return(ij)
+  }
+  gridComboDf = expand.grid.unique_FromSingleVector(ij, n)
+  returnVal = lapply(1:nrow(gridComboDf), function(i) gridComboDf[i,])
+  return(returnVal)
 }
 
 
