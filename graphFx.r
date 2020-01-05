@@ -302,7 +302,7 @@ potionsRecommendedForEffectReveal = function(g){
   potionRecommendations = list()
   repeat{
     x = recommendPotionForEffectReveal(g)
-    if (is.na(x)){
+    if (is.na(x[1])){
       break
     } else {
       # simulate making the potion and add to list
