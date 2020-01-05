@@ -138,15 +138,10 @@ server = function(input, output, session){
     ingredient = isolate(selectedIngredient_Inventory())
     if(length(ingredient) == 1){
       knownEffectsDf = isolate(knownIngredientEffectsDf())
-      print(ingredient)
-      print(paste0("Currently Known: ", knownEffectsDf$known[1]))
-      print(paste0("Changing to: ", !knownEffectsDf$known[1]))
-      print(paste0("Effect: ", knownEffectsDf$effect[1]))
       alchemyGraph <<- setKnownIngredientEffect(ingredient, 
                                               effect = knownEffectsDf$effect[1], 
                                               known = !knownEffectsDf$known[1], 
                                               alchemyGraph)
-      print(getIngredientEffectsDf(ingredient, alchemyGraph))
       KnownIngredientReactiveHandle$v = !KnownIngredientReactiveHandle$v # invalidate rv so knowneffectsdf is updated
     }
   })
