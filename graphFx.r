@@ -75,6 +75,7 @@ getIngredientEffectsDf = function(ingredient, g){
 setIngredientCount = function(ingredient, newCount, g){
   if (length(ingredient) > 1){
     warning("Will only use the first ingredient")
+    ingredient = ingredient[1]
   }
   if (length(ingredient) == 0){
     stop("Must supply one ingredient to get effects")
@@ -82,7 +83,7 @@ setIngredientCount = function(ingredient, newCount, g){
   if (class(newCount) != "numeric" | length(newCount) != 1){
     stop("newCount must be a numeric vector of length 1")
   }
-  V(g)[V(g)$name == ingredient[1]]$Count <- newCount
+  V(g)[V(g)$name == ingredient]$Count <- newCount
   return(g)
 }
 
