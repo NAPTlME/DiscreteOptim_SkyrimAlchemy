@@ -83,6 +83,9 @@ setIngredientCount = function(ingredient, newCount, g){
   if (class(newCount) != "numeric" | length(newCount) != 1){
     stop("newCount must be a numeric vector of length 1")
   }
+  if (!(ingredient %in% V(g)$name[V(g)$Type == "Ingredient"])){
+    stop(paste0(ingredient, " is not a known ingredient, check spelling and case."))
+  }
   V(g)[V(g)$name == ingredient]$Count <- newCount
   return(g)
 }
