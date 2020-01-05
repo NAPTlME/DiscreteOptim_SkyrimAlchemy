@@ -214,11 +214,11 @@ server = function(input, output, session){
     recommendationReactiveHandle$comments = paste0("Number of potions: ", numPotions,
                                                    "\nNumber of Effects revealed: ", numRevealed,
                                                    "\nNumber of Ingredients used: ", numIngredients,
-                                                   "\nProcess took: ", difftime(Sys.time(), startTime))
+                                                   "\nProcess took: ", round(as.numeric(difftime(Sys.time(), startTime, units = "secs")), 2), " seconds.")
   })
 
   output$recommendationComments = renderPrint({
-    recommendationReactiveHandle$comments
+    cat(recommendationReactiveHandle$comments)
   })
 
   output$optimizationTable = renderTable({
