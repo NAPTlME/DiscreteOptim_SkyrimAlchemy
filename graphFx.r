@@ -99,11 +99,12 @@ setIngredientCount = function(ingredient, newCount, g){
 getIngredientCount = function(ingredient, g){
   if (length(ingredient) > 1){
     warning("Will only use the first ingredient")
+    ingredient = ingredient[1]
   }
   if (length(ingredient) == 0){
     stop("Must supply one ingredient to get effects")
   }
-  return(V(g)[V(g)$name == ingredient[1]]$Count)
+  return(V(g)[V(g)$name == ingredient]$Count)
 }
 
 # Function to update the effect of an ingredient to known/unkonwn
