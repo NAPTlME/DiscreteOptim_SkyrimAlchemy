@@ -199,6 +199,7 @@ server = function(input, output, session){
   })
   
   observeEvent(input$startRecommendation, {
+    startTime = Sys.time()
     potions = potionsRecommendedForEffectReveal(alchemyGraph)
     numRevealedDf = getEffectRevealMetaData(potions, alchemyGraph)
     numRevealed = sum(numRevealedDf$numRevealedEffects)
@@ -214,9 +215,11 @@ server = function(input, output, session){
       df$Revealed_Effects = numRevealedDf$numRevealedEffects[i]
       return(df)
     }))
+    
     recommendationReactiveHandle$comments = paste0("Number of potions: ", numPotions,
                                                    "\nNumber of Effects revealed: ", numRevealed,
-                                                   "\nNumber of Ingredients used: ", numIngredients)
+                                                   "\nNumber of Ingredients used: ", numIngredients,
+                                                   "\nProcess took: ", difftime(Sys.time(), startTime))
   })
 
   output$recommendationComments = renderPrint({
