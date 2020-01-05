@@ -204,6 +204,10 @@ getEdgesRevealed = function(ingredients, g){
   # create subgraph of all effects and only the ingredients passed to this function
   sg = induced_subgraph(g, V(g)[V(g)$Type == "Effect" | V(g)$name %in% ingredients])
   sgEDf = igraph::as_data_frame(sg, "edges")
+  sgEDf = sgEDf %>% 
+    group_by(to) %>%
+    filter(n() > 1) %>%
+    ungroup()
   return(sum(!sgEDf$Known))
 }
 
@@ -238,6 +242,10 @@ recommendPotionForEffectReveal = function(g){
   # all combinations of 2 and 3 ingredients from these values
   potionCombinations = c(lapply(VerticesToUse, function(x) c(ingredient, x)), 
                          lapply(getAllCombinationsOfRange(VerticesToUse, 2), function(x) c(ingredient, x)))
+  if (length(potionCombinations) == 0){
+    # exit as there are no more combinations
+    return(NA)
+  }
   # calculate number of effects revealed for each, as well as number of ingredients used 
   # and number of ingredients with only one in inventory
   combinationMetadata = do.call(rbind, lapply(1:length(potionCombinations), function(i){
