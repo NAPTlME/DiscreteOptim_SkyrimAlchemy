@@ -13,7 +13,7 @@ getPotionEffects = function(ingredients, g){
     stop("2 or 3 ingredients must be provided")
   }
   # create subgraph of g using only effects and the listed ingredients
-  sg = subgraph(g, V(g)[V(g)$Type == "Effect" | V(g)$name %in% ingredients])
+  sg = induced_subgraph(g, V(g)[V(g)$Type == "Effect" | V(g)$name %in% ingredients])
   # get effects that are connected to the ingredients (found using degree > 0)
   effectVertices = V(sg)[V(sg)$Type == "Effect"]
   degreesOfEffects = degree(sg, v = effectVertices)
@@ -201,7 +201,7 @@ getEdgesRevealed = function(ingredients, g){
     stop("Not enough ingredients")
   }
   # create subgraph of all effects and only the ingredients passed to this function
-  sg = subgraph(g, V(g)[V(g)$Type == "Effect" | V(g)$name %in% ingredients])
+  sg = induced_subgraph(g, V(g)[V(g)$Type == "Effect" | V(g)$name %in% ingredients])
   sgEDf = igraph::as_data_frame(sg, "edges")
   return(sum(!sgEDf$Known))
 }
@@ -217,7 +217,7 @@ getEdgesRevealed = function(ingredients, g){
 # 2019-12-31
 recommendPotionForEffectReveal = function(g){
   # get subgraph showing only unknown effects and ingredients with at least one count
-  sg = subgraph(g, V(g)[V(g)$Type == "Effect" | V(g)$Count > 0])
+  sg = induced_subgraph(g, V(g)[V(g)$Type == "Effect" | V(g)$Count > 0])
   # remove known edges
   sg = delete.edges(sg, E(sg)[E(sg)$Known])
   # get ingredient vertices
