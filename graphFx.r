@@ -80,7 +80,7 @@ setIngredientCount = function(ingredient, newCount, g){
   if (length(ingredient) == 0){
     stop("Must supply one ingredient to get effects")
   }
-  if (class(newCount) != "numeric" | length(newCount) != 1){
+  if (!(class(newCount) %in% c("numeric", "integer")) | length(newCount) != 1){
     stop("newCount must be a numeric vector of length 1")
   }
   if (!(ingredient %in% V(g)$name[V(g)$Type == "Ingredient"])){
@@ -326,5 +326,24 @@ potionsRecommendedForEffectReveal = function(g){
     }
   }
   return(potionRecommendations)
+}
+
+# Function to simulate a list of potion ingredients and return metadata regarding the number of effects revealed etc.
+# returns dataframe
+# potions: list of vectors, each vector is a set of ingredients for a potion
+# g: the graph of all ingredients and effects
+# Author: Nathan Pratt
+# 2020-01-05
+getEffectRevealMetaData = function(potions, g){
+  dataframeList = list()
+  sg = g # remaining graph, will be updated each iteration
+  for(ingredients in potions){
+    df = data.frame(
+      numRevealedEffects = getEdgesRevealed(ingredients, sg)
+    )
+    sg = makePotion(ingredients, sg)
+    dataframeList[[length(dataframeList) + 1]] = df
+  }
+  return(do.call(rbind, dataframeList))
 }
 
