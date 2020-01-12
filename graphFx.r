@@ -225,15 +225,20 @@ getEdgesRevealed = function(ingredients, g){
 recommendPotionForEffectReveal = function(g){
   # get subgraph showing only unknown effects and ingredients with at least one count
   sg = induced_subgraph(g, V(g)[V(g)$Type == "Effect" | V(g)$Count > 0])
-  # remove known edges
-  sg = delete.edges(sg, E(sg)[E(sg)$Known])
+  # remove effects that only have one edge remaining 
+  # (these couldn't be obtained as there are no ingredients in the inventory to pair with)
+  sg = delete.vertices(sg, V(sg)[V(sg)$Type == "Effect" & degree(sg, V(sg)) == 1])
+  # remove known edges 
+  # done in separate graph to allow connections where one ingredient knows the effect and another does not (so the one hidden one can be revealed)
+  sgUnknown = delete.edges(sg, E(sg)[E(sg)$Known])
   # get ingredient vertices
   ingredientVs = V(sg)[V(sg)$Type == "Ingredient"]
   if (length(ingredientVs) == 0){ # exit early if there are no more vertices to check
     return(NA)
   }
+  ingredientVs_fromSgUnknown = V(sgUnknown)[V(sgUnknown)$Type == "Ingredient"] # only able to treat these as the same because the order of the vertices is intact
   # get ingredient with highest number of edges # returns named numeric vector
-  ingredientNumHiddenEffects = degree(sg, ingredientVs)
+  ingredientNumHiddenEffects = degree(sgUnknown, ingredientVs_fromSgUnknown)
   ingredientIndexToUse = which(ingredientNumHiddenEffects == max(ingredientNumHiddenEffects))[1]
   ### get effects this ingredient connects to and find which of these has the highest number of connections
   # get all nodes within distance 2 and 4 from this vertex (these are potential ingredients for the potion)
