@@ -1,4 +1,5 @@
 # DiscreteOptim_SkyrimAlchemy
+## This is a prototype
 
 Problem: When starting a new save, the act of exposing ingredient effects for potions is tedious and personal preference is to avoid for repeated playthroughs. Current utilities (online/mobile) fail to provide a sufficient solution (not tailored to the player's custom inventory and might represent paths not feasable at the moment for the player), console commands are not preferred.
 
