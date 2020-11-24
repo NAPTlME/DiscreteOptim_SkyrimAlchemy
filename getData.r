@@ -2,6 +2,8 @@
 # Nathan Pratt 
 # 2020-01-01
 
+library(rvest)
+
 ingredientsUrl = "https://elderscrolls.fandom.com/wiki/Ingredients_(Skyrim)"
 
 # get ingredient table
