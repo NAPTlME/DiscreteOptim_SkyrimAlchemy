@@ -3,15 +3,19 @@
 # 2020-01-01
 
 library(rvest)
+library(igraph)
+library(stringr)
+library(dplyr)
+library(tidyr)
 
 ingredientsUrl = "https://elderscrolls.fandom.com/wiki/Ingredients_(Skyrim)"
 
 # get ingredient table
-page = html(ingredientsUrl)
+page = read_html(ingredientsUrl)
 
 tables = page %>%
   html_nodes("table")
-ingredientTable = html_table(tables[[1]])
+ingredientTable = html_table(tables[[2]])
 
 # clean up symbols from names (except "'" and space)
 ingredientTable$Ingredient = str_replace_all(ingredientTable$Ingredient, "[^a-zA-Z'\\s]", "")
