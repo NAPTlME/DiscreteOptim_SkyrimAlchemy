@@ -2,6 +2,10 @@
 # Nathan Pratt 
 # 2020-01-01
 
+library(ggplot2)
+library(dplyr)
+library(igraph)
+
 # Function to show percentage of types of ingredients in inventory
 # g: igraph containing all ingredients and effects
 # Author: Nathan Pratt
