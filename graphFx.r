@@ -2,6 +2,9 @@
 # Nathan Pratt 
 # 2020-01-01
 
+library(igraph)
+library(dplyr)
+
 # Function to get all effects of a potion using the ingredients provided
 # ingredients: character vector of length 2 or 3
 # g: igraph containing all ingredients and effects
