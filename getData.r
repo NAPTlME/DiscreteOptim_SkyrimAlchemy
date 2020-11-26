@@ -48,7 +48,63 @@ alchemyEdges = ingredientTable %>%
   select(id1, id2, Known)
 
 # create graph
-alchemyGraph = graph.data.frame(alchemyEdges, directed = F, vertices = alchemyNodes)
+alchemyGraph = graph.data.frame(alchemyEdges, directed = T, vertices = alchemyNodes)
+
+potionCombinations1 = c(getAllCombinationsOfRange(ingredientNodes$Name, 2),
+                       getAllCombinationsOfRange(ingredientNodes$Name, 3)) # not very efficient, makes all possible combinations of ingredients
+
+# instead get only combinations that will result in a potion effect
+usedIngredientsV1 = c()
+potionCombinations = c(lapply(ingredientNodes$Name, function(x){
+  print(paste0("ingredient: ", x))
+  searchResults = bfs(alchemyGraph, V(alchemyGraph)[V(alchemyGraph)$name == x], neimode = "all", order = F, unreachable = F, dist = T)
+  adjacentIngredients = names(searchResults$dist[!is.nan(searchResults$dist) & searchResults$dist == 2])
+  adjacentIngredients = adjacentIngredients[!(adjacentIngredients %in% usedIngredientsV1)]
+  if (length(adjacentIngredients) == 0){
+    return(NULL)
+  }
+  returnPotions = lapply(adjacentIngredients, function(y){
+    c(x, y)
+  })
+  print(paste0("Num 2x potions: ", length(returnPotions)))
+  if (length(adjacentIngredients) == 1){
+    return(returnPotions)
+  }
+  # now get 3 ing potion combinations
+  ing3_1 = lapply(getAllCombinationsOfRange(adjacentIngredients, 2), function(y) c(x, y))
+  print(paste0("Num 3x combo potions: ", length(ing3_1)))
+  # now iterate over returnPotions and get any effects that are 2 steps away from the second ingredient but not the first
+  ing3_2 = lapply(returnPotions, function(y){
+    secondIngredient = y[2]
+    searchResults2 = bfs(alchemyGraph, V(alchemyGraph)[V(alchemyGraph)$name == secondIngredient], neimode = "all", order = F, unreachable = F, dist = T)
+    adjacentIngredients2 = names(searchResults2$dist[!is.nan(searchResults2$dist) & searchResults2$dist == 2])
+    adjacentIngredients2 = adjacentIngredients2[!(adjacentIngredients2 %in% c(adjacentIngredients, usedIngredientsV1)) & adjacentIngredients2 != x]
+    if(length(adjacentIngredients2) > 0){
+      return (lapply(adjacentIngredients2, function(j){
+        c(y, j)
+      }))
+    } else {
+      return(NULL)
+    }
+  }) %>% unlist(recursive = F)
+  print(paste0("Num other 3x potions: ", length(ing3_2)))
+  usedIngredientsV1 <<- c(usedIngredientsV1, x)
+  return(c(returnPotions, ing3_1, ing3_2))
+})) %>% unlist(recursive = F)
+
+potionsDf = do.call(rbind, lapply(1:length(potionCombinations), function(i){
+  data.frame(id1 = paste0("potion", i), id2 = potionCombinations[[i]], Known = F) # adding known to match ingredient-effect edges
+}))
+alchemyEdges2 = rbind(alchemyEdges, potionsDf)
+potionNodes = data.frame(Name = unique(potionsDf$id1),
+                         Type = "Potion",
+                         Count = 0,
+                         Comments = NA,
+                         color = "goldenrod")
+alchemyNodes2 = rbind(alchemyNodes, potionNodes)
+alchemyGraph2 = graph.data.frame(alchemyEdges2, directed = T, vertices = alchemyNodes2)
+
+
 
 # remove values that will no longer be used
 rm(ingredientsUrl, page, tables)

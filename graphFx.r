@@ -461,3 +461,36 @@ getEffectRevealMetaData = function(potions, g){
   return(do.call(rbind, dataframeList))
 }
 
+startTime = Sys.time()
+potions = potionsRecommendedForEffectReveal(alchemyGraph)
+difftime(Sys.time(), startTime)
+
+tmpPotion = c("Bear Claws", "Eye of Sabre Cat", "Hanging Moss")
+tmp = induced_subgraph(alchemyGraph, V(alchemyGraph)[V(alchemyGraph)$Type == "Effect" | V(alchemyGraph)$name %in% tmpPotion])
+tmp = delete.vertices(tmp, V(tmp)[degree(tmp, V(tmp)) == 0])
+
+plot(tmp, 
+     #vertex.label = NA, 
+     vertex.size = 4)
+bfs(tmp, V(tmp)[[1]], neimode = "out", order = F, unreachable = F, dist = T)
+
+# add potion
+
+tmp = add.vertices(tmp, 1, attr = list(name = "potion1", color = "goldenrod", Type = "Potion"))
+tmp = add_edges(tmp, c(V(tmp)[V(tmp)$name == "potion1"], V(tmp)[V(tmp)$name == tmpPotion[1]],
+                       V(tmp)[V(tmp)$name == "potion1"], V(tmp)[V(tmp)$name == tmpPotion[3]]))
+
+
+plot(tmp, 
+     #vertex.label = NA, 
+     vertex.label.color = V(tmp)$color,
+     vertex.size = 0)
+tmpBfs = bfs(tmp, V(tmp)[V(tmp)$name == "potion1"], neimode = "out", order = F, unreachable = F, dist = T)
+
+ingredients = names(tmpBfs$dist)[!is.nan(tmpBfs$dist) & tmpBfs$dist == 1]
+allEffects = names(tmpBfs$dist)[!is.nan(tmpBfs$dist) & tmpBfs$dist == 2]
+
+all_shortest_paths(tmp, from = V(tmp)[V(tmp)$name == "potion1"], to = V(tmp)[V(tmp)$name %in% allEffects], mode = "out")
+sapply(all_simple_paths(tmp, from = V(tmp)[V(tmp)$name == "potion1"], to = V(tmp)[V(tmp)$name %in% allEffects], mode = "out"), function(x){
+  x[length(x)]
+})
