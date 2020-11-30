@@ -320,6 +320,117 @@ recommendPotionForEffectReveal2 = function(g){
   }
   return(potionCombinations[[combinationMetadata$index[1]]])
 }
+recommendPotionForEffectReveal2.2 = function(g){ # effect based optim
+  # get subgraph showing only unknown effects and ingredients with at least one count
+  sg = induced_subgraph(g, V(g)[V(g)$Type == "Effect" | V(g)$Count > 0])
+  # remove effects that only have one edge remaining 
+  # (these couldn't be obtained as there are no ingredients in the inventory to pair with)
+  sg = delete.vertices(sg, V(sg)[V(sg)$Type == "Effect" & degree(sg, V(sg)) == 1])
+  # remove known edges 
+  # done in separate graph to allow connections where one ingredient knows the effect and another does not (so the one hidden one can be revealed)
+  sgUnknown = delete.edges(sg, E(sg)[E(sg)$Known])
+  
+  # get effect vertices
+  effects = V(sgUnknown)[V(sgUnknown)$Type == "Effect"]
+  effectDeg = degree(sgUnknown, effects)
+  # convert any degree above 3 to 3
+  effectDeg[effectDeg > 3] = 3
+  # filter on only those equal to the max
+  effectsToCheck = names(effectDeg[effectDeg == max(effectDeg)])
+  effectMeta = lapply(effectsToCheck, function(effect){
+    searchResult = bfs(sgUnknown, V(sgUnknown)[V(sgUnknown)$name == effect], neimode = "all", unreachable = F, dist = T)
+    effectsToPath = names(searchResult$dist[searchResult$dist == 2 | searchResult$dist == 4])
+    # all one step away
+    ingOneStepAway = names(searchResult$dist[searchResult$dist == 2])
+    potionOneStepAway = getAllCombinationsOfRange(ingOneStepAway, 2)
+    paths = all_shortest_paths(sgUnknown, from = V(sgUnknown)[V(sgUnknown)$name == effect], to = V(sgUnknown)[V(sgUnknown)$name %in% effectsToPath], mode = "all")
+    # all one and two steps away
+    potionOneTwoStepAway = lapply(paths$res[sapply(paths$res, function(x) length(x) >= 4)], function(x){
+      return(names(x[c(2,4)]))
+    })
+    potionOneTwoStepAway = lapply(potionOneTwoStepAway, function(x){
+      sort(x)
+    })
+    potionOneTwoStepAway = potionOneTwoStepAway[[!duplicated(potionOneTwoStepAway)]]
+    # all one and two steps away with all one step away not included
+    potionOneTwoOneStepAway = lapply(potionOneTwoStepAway, function(x){
+      ingNotInpotion = ingOneStepAway[sapply(ingOneStepAway, function(j) !(j %in% x))]
+      lapply(ingNotInpotion, function(y){
+        c(x, y)
+      })
+    }) %>% unlist(recursive = F)
+    potionCombin = c(potionOneStepAway, potionOneTwoStepAway, potionOneTwoOneStepAway)
+    # order ingredients
+    potionCombin = lapply(potionCombin, function(x){
+      sort(x)
+    })
+    potionCombin = potionCombin[!duplicated(potionCombin)]
+    # delete duplicates
+    ingInPath =  sort(table(sapply(paths$res, function(x) {
+      returnIn = 2
+      if (length(x) >= 4){
+        returnIn = c(returnIn, 4)
+      }
+      names(x[returnIn])
+    }) %>% unlist()), decreasing = T)
+    return(tbl = ingInPath, potions = potionCombin)
+  }) ### test this
+  
+  effectMetaDf = do.call(rbind, lapply(effectMeta, function(x){
+    data.frame(max = max(as.numeric(x)), mean = mean(as.numeric(x)), len = length(x))
+  }))
+  
+  ### could (instead of doing all combinations) only get those 1 step away and pair with those one and 2 steps away, 1 and 2, 1 and 1, 1 and 1 and 2)
+  
+  ItemToUse = effectMeta[[which(effectMetaDf$max == max(effectMetaDf$max))[1]]] # 9
+  ItemToUse = effectMeta[[which(effectMetaDf$mean == max(effectMetaDf$mean))[1]]] # 12
+  ItemToUse = effectMeta[[which(effectMetaDf$len == max(effectMetaDf$len))[1]]] # 
+  
+  ingToUse = names(ItemToUse[ItemToUse >= mean(ItemToUse)])
+  
+  potionCombinations = c(getAllCombinationsOfRange(ingToUse, 2),
+                         getAllCombinationsOfRange(ingToUse, 3))
+  
+  
+  # get ingredient vertices
+  ingredientVs = V(sg)[V(sg)$Type == "Ingredient"]
+  if (length(ingredientVs) == 0){ # exit early if there are no more vertices to check
+    return(NA)
+  }
+  ingredientVs_fromSgUnknown = V(sgUnknown)[V(sgUnknown)$Type == "Ingredient"] # only able to treat these as the same because the order of the vertices is intact
+  # get ingredient with highest number of edges # returns named numeric vector
+  ingredientNumHiddenEffects = degree(sgUnknown, ingredientVs_fromSgUnknown)
+  ingredientIndexToUse = which(ingredientNumHiddenEffects == max(ingredientNumHiddenEffects))[1]
+  ### get effects this ingredient connects to and find which of these has the highest number of connections
+  # get all nodes within distance 2 and 4 from this vertex (these are potential ingredients for the potion)
+  ## unfortunately, this is everything in this dataset when you have most ingredients
+  searchResults = bfs(sg, root = ingredientVs[ingredientIndexToUse], neimode = "all", order = F, unreachable = F, dist = T)
+  VerticesToUse = names(searchResults$dist[!is.nan(searchResults$dist) & searchResults$dist == 2])???
+    # get name of first ingredient
+    ingredient = ingredientVs$name[ingredientIndexToUse]
+  # all combinations of 2 and 3 ingredients from these values
+  potionCombinations = c(lapply(VerticesToUse, function(x) c(ingredient, x)), 
+                         lapply(getAllCombinationsOfRange(VerticesToUse, 2), function(x) c(ingredient, x)))
+  if (length(potionCombinations) == 0){
+    # exit as there are no more combinations
+    return(NA)
+  }
+  # calculate number of effects revealed for each, as well as number of ingredients used 
+  # and number of ingredients with only one in inventory
+  combinationMetadata = do.call(rbind, lapply(1:length(potionCombinations), function(i){
+    data.frame(index = i,
+               numRevealedEffects = getEdgesRevealed(potionCombinations[[i]], sg), # could also just send g here
+               numIngredientsWithOnly1Count = sum(ingredientVs$Count[ingredientVs$name %in% potionCombinations[[i]]] == 1),
+               numIngredientsUsed = length(potionCombinations[[i]]))
+  }))
+  combinationMetadata = combinationMetadata %>% 
+    filter(numRevealedEffects > 0) %>%
+    arrange(-numRevealedEffects, numIngredientsUsed, -numIngredientsWithOnly1Count)
+  if (nrow(combinationMetadata) == 0){
+    return(NA)
+  }
+  return(potionCombinations[[combinationMetadata$index[1]]])
+}
 recommendPotionForEffectReveal3 = function(g){ # assumes the potion layer is present
   # because of limitations in igraph, a proper traversal can't be used, so we will have to subgraph for certain calculations
   # remove potions for which any ingredients are missing
