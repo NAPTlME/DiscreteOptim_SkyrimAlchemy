@@ -101,7 +101,8 @@ potionNodes = data.frame(Name = unique(potionsDf$id1),
                          Count = 0,
                          Comments = NA,
                          color = "goldenrod")
-alchemyNodes2 = rbind(alchemyNodes, potionNodes)
+alchemyEdges2 = rbind(alchemyEdges2, data.frame(id1 = "root", id2 = potionNodes$Name, Known = F))
+alchemyNodes2 = rbind(alchemyNodes, potionNodes, data.frame(Name = "root", Type = "Root", Count = 0, Comments = NA, color = "black"))
 alchemyGraph2 = graph.data.frame(alchemyEdges2, directed = T, vertices = alchemyNodes2)
 
 
